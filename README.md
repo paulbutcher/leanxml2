@@ -3,6 +3,26 @@
 A Lean 4 binding to [libxml2](http://xmlsoft.org/), covering DOM parsing,
 tree navigation, attributes, namespaces, serialization and XPath.
 
+## Usage
+
+```lean
+import Leanxml2
+
+open Leanxml2
+
+def main : IO Unit := do
+  match ← Doc.parseFile "catalog.xml" with
+  | .error errors => for e in errors do IO.eprintln e.message
+  | .ok doc =>
+    match doc.root with
+    | .element name _ _ children =>
+      IO.println s!"root: {name}, {children.size} children"
+    | _ => pure ()
+    match ← doc.xpath "//book[@id='b1']" with
+    | .ok nodes => IO.println s!"matched {nodes.size} node(s)"
+    | .error errors => for e in errors do IO.eprintln e.message
+```
+
 ## Two-layer design
 
 - `Leanxml2.FFI`: a thin, near-1:1 binding to libxml2's C API. One `opaque`
@@ -37,43 +57,27 @@ doc comment for the full argument).
 
 ## Scope
 
-In scope for this pass: parsing into a DOM tree (`xmlReadMemory`/
-`xmlReadFile`, safe-by-default: no network, no external DTD loading), tree
+Parsing into a DOM tree (`xmlReadMemory`/`xmlReadFile`), tree
 navigation, attributes, namespaces, serialization
 (`xmlDocDumpMemory`/`xmlNodeDump`), a minimal XPath wrapper, and structured
 error reporting.
 
-Explicitly deferred to a later pass, with the C shim and `lakefile.lean`
-structured so they can be added without rework: the HTML parser, XSD/
-RelaxNG/DTD validation, XInclude, C14N, catalogs, the streaming
-`xmlTextReader`/`xmlTextWriter` APIs, custom SAX2 handlers, URI parsing, and
-non-default encoding handling.
+Not yet done:
 
-## Usage
-
-```lean
-import Leanxml2
-
-open Leanxml2
-
-def main : IO Unit := do
-  match ← Doc.parseFile "catalog.xml" with
-  | .error errors => for e in errors do IO.eprintln e.message
-  | .ok doc =>
-    match doc.root with
-    | .element name _ _ children =>
-      IO.println s!"root: {name}, {children.size} children"
-    | _ => pure ()
-    match ← doc.xpath "//book[@id='b1']" with
-    | .ok nodes => IO.println s!"matched {nodes.size} node(s)"
-    | .error errors => for e in errors do IO.eprintln e.message
-```
+- the HTML parser,
+- XSD/RelaxNG/DTD validation
+- XInclude,
+- C14N,
+- catalogs,
+- streaming `xmlTextReader`/`xmlTextWriter` APIs
+- custom SAX2 handlers
+- URI parsing
+- non-default encoding handling.
 
 ## Development
 
 Requires `libxml2` (with headers) and `pkg-config`, discoverable via
-`pkg-config libxml-2.0`. If they're missing, install them before building;
-this project never installs OS packages itself.
+`pkg-config libxml-2.0`.
 
 ```
 lake build
