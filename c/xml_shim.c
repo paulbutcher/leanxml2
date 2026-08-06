@@ -80,9 +80,14 @@ LEAN_EXPORT lean_object *lean_xml_global_init(lean_object *w) {
     // (xmlCtxtSetErrorHandler/xmlXPathSetErrorHandler) would avoid depending on
     // any global state at all, but only exist since libxml2 2.12; this targets
     // the older, more broadly available API (e.g. Ubuntu 24.04 LTS ships 2.9.14).
+    // Cast explicitly: libxml2 changed xmlStructuredErrorFunc's second
+    // parameter from xmlErrorPtr to const xmlErrorPtr between versions
+    // (e.g. Ubuntu 24.04 LTS's 2.9.14 vs. this system's libxml2), and a
+    // function pointer cast sidesteps that mismatch since const does not
+    // affect the calling convention.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    xmlThrDefSetStructuredErrorFunc(NULL, lx_error_handler);
+    xmlThrDefSetStructuredErrorFunc(NULL, (xmlStructuredErrorFunc)lx_error_handler);
 #pragma GCC diagnostic pop
     g_doc_class = lean_register_external_class(lx_doc_finalize, lx_doc_foreach);
     return lean_io_result_mk_ok(lean_box(0));

@@ -17,7 +17,9 @@ target xmlShimDynlib pkg : Dynlib := do
     addPlatformTrace
     let cflags ← pkgConfigFlags #["--cflags"] "libxml-2.0"
     let libs ← pkgConfigFlags #["--libs"] "libxml-2.0"
-    let cArgs := #["-I", (← getLeanIncludeDir).toString] ++ cflags
+    -- -fPIC: this object is linked into a shared library. Some architectures
+    -- (observed: aarch64) tolerate non-PIC relocations there; x86_64 does not.
+    let cArgs := #["-fPIC", "-I", (← getLeanIncludeDir).toString] ++ cflags
     let oFile := pkg.buildDir / "c" / "xml_shim.o"
     let libFile := pkg.sharedLibDir / (nameToSharedLib "leanxml2_shim")
     let art ← buildArtifactUnlessUpToDate libFile (ext := sharedLibExt) (restore := true) do
