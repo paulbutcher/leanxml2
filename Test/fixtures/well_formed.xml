@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="urn:example:catalog" xmlns:meta="urn:example:meta" meta:version="1">
+  <book id="b1" meta:featured="true">
+    <?example-hint priority="high"?>
+    <title>The Left Hand of Darkness</title>
+    <author>Ursula K. Le Guin</author>
+    <!-- price includes tax -->
+    <price currency="USD">12.50</price>
+    <description><![CDATA[A novel about <ambassador> diplomacy on Winter.]]></description>
+  </book>
+  <book id="b2">
+    <title>Kindred</title>
+    <author>Octavia E. Butler</author>
+    <price currency="USD">14.00</price>
+  </book>
+</catalog>
