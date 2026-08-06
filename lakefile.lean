@@ -5,7 +5,7 @@ import Lake
 open Lake DSL System
 
 package leanxml2 where
-  version := v!"0.1.0"
+  version := v!"0.1.1"
 
 def pkgConfigFlags (args : Array String) (lib : String) : IO (Array String) := do
   let out ← IO.Process.run { cmd := "pkg-config", args := args.push lib }
