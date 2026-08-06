@@ -1,0 +1,6 @@
+name = "xml2"
+version = "0.1.0"
+defaultTargets = ["Xml2"]
+
+[[lean_lib]]
+name = "Xml2"
