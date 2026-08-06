@@ -72,6 +72,18 @@ static void lx_error_handler(void *userData, const xmlError *error) {
 
 LEAN_EXPORT lean_object *lean_xml_global_init(lean_object *w) {
     xmlInitParser();
+    // xmlSetStructuredErrorFunc's target is thread-local storage: a handler
+    // registered once here, during Lean's `initialize` phase, can be invisible
+    // to whichever thread later actually runs a parse. xmlThrDefSetStructuredErrorFunc
+    // sets the default every thread starts with instead, which is what a single
+    // process-wide handler needs. The per-context alternatives
+    // (xmlCtxtSetErrorHandler/xmlXPathSetErrorHandler) would avoid depending on
+    // any global state at all, but only exist since libxml2 2.12; this targets
+    // the older, more broadly available API (e.g. Ubuntu 24.04 LTS ships 2.9.14).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    xmlThrDefSetStructuredErrorFunc(NULL, lx_error_handler);
+#pragma GCC diagnostic pop
     g_doc_class = lean_register_external_class(lx_doc_finalize, lx_doc_foreach);
     return lean_io_result_mk_ok(lean_box(0));
 }
@@ -85,24 +97,14 @@ LEAN_EXPORT lean_object *lean_xml_read_memory(b_lean_obj_arg contents, b_lean_ob
     int buf_len = (int)(lean_string_size(contents) - 1);
     const char *u = lean_string_cstr(url);
     const char *u_arg = u[0] != '\0' ? u : NULL;
-    // The structured error callback is attached per-context (rather than
-    // process-wide via xmlSetStructuredErrorFunc) because that global is
-    // actually thread-local storage: a handler registered once at startup
-    // is invisible to whichever thread later happens to run the parse.
-    xmlParserCtxtPtr ctxt = xmlNewParserCtxt();
-    xmlCtxtSetErrorHandler(ctxt, lx_error_handler, NULL);
-    xmlDocPtr doc = xmlCtxtReadMemory(ctxt, buf, buf_len, u_arg, NULL, LX_PARSE_OPTIONS);
-    xmlFreeParserCtxt(ctxt);
+    xmlDocPtr doc = xmlReadMemory(buf, buf_len, u_arg, NULL, LX_PARSE_OPTIONS);
     lx_doc *h = (lx_doc *)malloc(sizeof(lx_doc));
     h->doc = doc;
     return lean_io_result_mk_ok(lean_alloc_external(g_doc_class, h));
 }
 
 LEAN_EXPORT lean_object *lean_xml_read_file(b_lean_obj_arg path, lean_object *w) {
-    xmlParserCtxtPtr ctxt = xmlNewParserCtxt();
-    xmlCtxtSetErrorHandler(ctxt, lx_error_handler, NULL);
-    xmlDocPtr doc = xmlCtxtReadFile(ctxt, lean_string_cstr(path), NULL, LX_PARSE_OPTIONS);
-    xmlFreeParserCtxt(ctxt);
+    xmlDocPtr doc = xmlReadFile(lean_string_cstr(path), NULL, LX_PARSE_OPTIONS);
     lx_doc *h = (lx_doc *)malloc(sizeof(lx_doc));
     h->doc = doc;
     return lean_io_result_mk_ok(lean_alloc_external(g_doc_class, h));
@@ -310,7 +312,6 @@ LEAN_EXPORT lean_object *lean_xml_clear_errors(lean_object *w) {
 LEAN_EXPORT lean_object *lean_xml_xpath_new_context(b_lean_obj_arg h, lean_object *w) {
     xmlDocPtr doc = lx_get(h)->doc;
     xmlXPathContextPtr ctx = doc ? xmlXPathNewContext(doc) : NULL;
-    if (ctx) xmlXPathSetErrorHandler(ctx, lx_error_handler, NULL);
     return lean_io_result_mk_ok(lean_box_usize((size_t)(uintptr_t)ctx));
 }
 
