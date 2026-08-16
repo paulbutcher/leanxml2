@@ -12,8 +12,8 @@ def assertEq [BEq α] [Repr α] (msg : String) (expected actual : α) : IO Unit 
   unless expected == actual do
     throw (IO.userError s!"{msg}: expected {repr expected}, got {repr actual}")
 
-def wellFormedPath := "Test/fixtures/well_formed.xml"
-def malformedPath := "Test/fixtures/malformed.xml"
+def wellFormedPath := "fixtures/well_formed.xml"
+def malformedPath := "fixtures/malformed.xml"
 
 def elementChildren (node : Node) (name : String) : Array Node :=
   node.children.filter fun
@@ -151,10 +151,12 @@ where
     else
       firstElement (← FFI.nodeNext n)
 
-def main : IO Unit := do
+def runAll : IO Unit := do
   testParseWellFormed
   testMalformed
   testRoundTrip
   testXPath
   testLowLevelFFI
   IO.println "All tests passed."
+
+def main : IO Unit := runAll

@@ -33,8 +33,10 @@ lean_lib Leanxml2 where
   precompileModules := true
   moreLinkLibs := #[xmlShimDynlib]
 
-lean_lib Test
-
+-- Tests live in a subproject so that nothing they need, including their
+-- dependencies, is resolved by a downstream consumer of this package.
 @[test_driver]
-lean_exe leanxml2Test where
-  root := `Test.Main
+script tests do
+  let child ← IO.Process.spawn
+    { cmd := "lake", args := #["test"], cwd := __dir__ / "test" }
+  child.wait
