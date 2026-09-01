@@ -1,7 +1,9 @@
 -- Copyright (c) 2026 Paul Butcher. All rights reserved.
 -- Released under Apache 2.0 license as described in the file LICENSE.
 
-import Leanxml2.Doc
+module
+
+public import Leanxml2.Doc
 
 namespace Leanxml2
 namespace Doc
@@ -10,7 +12,7 @@ namespace Doc
 `(prefix, href)` pairs available to the expression. The matched node-set is
 converted eagerly to `Node` values; an expression that evaluates to a number,
 string or boolean rather than a node-set yields an empty array. -/
-def xpath (doc : Doc) (expr : String) (namespaces : Array (String × String) := #[]) :
+public def xpath (doc : Doc) (expr : String) (namespaces : Array (String × String) := #[]) :
     IO (Except (Array XmlError) (Array Node)) := do
   let ctx ← FFI.xpathNewContext doc.handle
   if ctx == 0 then

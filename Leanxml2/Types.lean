@@ -1,9 +1,11 @@
 -- Copyright (c) 2026 Paul Butcher. All rights reserved.
 -- Released under Apache 2.0 license as described in the file LICENSE.
 
+module
+
 namespace Leanxml2
 
-structure Attribute where
+public structure Attribute where
   name : String
   namespaceUri : Option String
   value : String
@@ -13,7 +15,7 @@ deriving Repr, BEq
 node-lifetime discussion in the README for why. `Node` carries no back-links
 to its parent or previous sibling, since it is an ordinary immutable value:
 callers that need parent context should track it while traversing. -/
-inductive Node where
+public inductive Node where
   | element (name : String) (namespaceUri : Option String)
       (attributes : Array Attribute) (children : Array Node)
   | text (content : String)
@@ -26,7 +28,7 @@ namespace Node
 
 /-- Look up a named attribute on an element node, matching by name and (if
 given) namespace URI. `none` for any other node kind. -/
-def attribute? (node : Node) (name : String) (namespaceUri : Option String := none) :
+public def attribute? (node : Node) (name : String) (namespaceUri : Option String := none) :
     Option String :=
   match node with
   | .element _ _ attributes _ =>
@@ -34,7 +36,7 @@ def attribute? (node : Node) (name : String) (namespaceUri : Option String := no
       |>.map (·.value)
   | _ => none
 
-def children : Node → Array Node
+public def children : Node → Array Node
   | .element _ _ _ children => children
   | _ => #[]
 

@@ -1,20 +1,22 @@
 -- Copyright (c) 2026 Paul Butcher. All rights reserved.
 -- Released under Apache 2.0 license as described in the file LICENSE.
 
-import Leanxml2.FFI
-import Leanxml2.Types
-import Leanxml2.Error
+module
+
+public import Leanxml2.FFI
+public import Leanxml2.Types
+public import Leanxml2.Error
 
 namespace Leanxml2
 
 -- The `xmlElementType` values this library interprets when converting a
 -- node; matches the C enum in `libxml/tree.h`.
 namespace ElementType
-def element : UInt32 := 1
-def text : UInt32 := 3
-def cdata : UInt32 := 4
-def pi : UInt32 := 7
-def comment : UInt32 := 8
+public def element : UInt32 := 1
+public def text : UInt32 := 3
+public def cdata : UInt32 := 4
+public def pi : UInt32 := 7
+public def comment : UInt32 := 8
 end ElementType
 
 private def optionalString (s : String) : Option String :=
@@ -33,7 +35,7 @@ private def buildAttributes (n : USize) : IO (Array Attribute) := do
 
 /-- Recursion follows `xmlNodePtr` sibling/child links, which carry no
 structural termination evidence Lean can see, so this must be `partial`. -/
-partial def buildNode (n : USize) : IO Node := do
+public partial def buildNode (n : USize) : IO Node := do
   let ty ← FFI.nodeType n
   if ty == ElementType.element then
     let name ← FFI.nodeName n
@@ -71,7 +73,7 @@ where
 handle, kept alive only so `toString`/`rootToString` can re-serialize via
 libxml2's own writer. See the README for why node pointers themselves never
 escape the C shim. -/
-structure Doc where
+public structure Doc where
   handle : FFI.Doc.Handle
   root : Node
 
@@ -85,18 +87,19 @@ private def afterParse (h : FFI.Doc.Handle) : IO (Except (Array XmlError) Doc) :
     let root ← buildNode (← FFI.docRoot h)
     pure (.ok { handle := h, root })
 
-def parseMemory (contents : String) (url : String := "") : IO (Except (Array XmlError) Doc) := do
+public def parseMemory (contents : String) (url : String := "") :
+    IO (Except (Array XmlError) Doc) := do
   afterParse (← FFI.readMemory contents url)
 
-def parseFile (path : String) : IO (Except (Array XmlError) Doc) := do
+public def parseFile (path : String) : IO (Except (Array XmlError) Doc) := do
   afterParse (← FFI.readFile path)
 
 /-- Serialize the whole document, as parsed, via `xmlDocDumpMemory`. -/
-def toString (doc : Doc) : IO String :=
+public def toString (doc : Doc) : IO String :=
   FFI.docDump doc.handle
 
 /-- Serialize just the root element, via `xmlNodeDump`. -/
-def rootToString (doc : Doc) : IO String := do
+public def rootToString (doc : Doc) : IO String := do
   FFI.nodeDump doc.handle (← FFI.docRoot doc.handle)
 
 end Doc
